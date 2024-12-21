@@ -1,23 +1,74 @@
 import { createText } from "../components/text1";
-import { createButton, } from "../components/button1";
+import { createButton } from "../components/button1";
 
-export function createWindows(scene, x, y, width, height, title, content, onClose) {
-    // Background with outline
-    const background = scene.add.rectangle(x, y, width, height, 0x282828)
-        .setOrigin(0.5)
-        .setStrokeStyle(4, 0x98cc92); // Adding outline with green color
+export class PopupWindow {
+    constructor(scene, x, y, width, height, onClose) {
+        this.scene = scene;
 
-    // Title text
-    const titleText = createText(scene, x - width / 2 + 20, y - height / 2 + 10, title, "22px", "#98cc92");
+        // Background with outline
+        this.background = scene.add.rectangle(x, y, width, height, 0x282828)
+            .setOrigin(0.5)
+            .setStrokeStyle(4, 0x98cc92);
 
-    // Content text
-    const contentText = createText(scene, x, y, content, "18px", "#ffffff").setOrigin(0.5);
+        // Title text
+        this.titleText = createText(
+            scene,
+            x - width / 2 + 20, // Position at left edge with some padding
+            y - height / 2 + 10, // Position near the top edge with some padding
+            "",
+            "22px",
+            "#98cc92"
+        );
 
-    // Close button
-    const closeButton = createButton(scene, x + width / 2 - 40, y - height / 2 + 10, "X", onClose);
+        // Content container
+        this.contents = scene.add.container(x, y);
 
-    // Container for all elements
-    const container = scene.add.container(0, 0, [background, titleText, contentText, closeButton]);
+        // Close button
+        this.closeButton = createButton(
+            scene,
+            x + width / 2 - 40, // Position at the right edge with padding
+            y - height / 2 + 10, // Position near the top edge with padding
+            "X",
+            () => {
+                this.hide();
+                if (onClose) onClose();
+            }
+        );
 
-    return container;
+        // Container for all elements
+        this.container = scene.add.container(0, 0, [
+            this.background,
+            this.titleText,
+            this.contents,
+            this.closeButton,
+        ])
+            .setDepth(3)
+            .setVisible(false); // Initially hidden
+
+        // this.isPopupActive = false; // Tracks popup state
+    }
+
+    show(title, content) {
+        this.titleText.setText(title);
+        this.contents.removeAll(true); // Clear previous content
+
+        if (typeof content === "string") {
+            // If content is a string, create and add text
+            const contentText = createText(this.scene, 0, 0, content, "18px", "#ffffff").setOrigin(0.5);
+            this.contents.add(contentText);
+        } else if (content) {
+            // If content is a Phaser object or container, add it directly
+            this.contents.add(content);
+        }
+
+        this.container.setVisible(true);
+        this.scene.isPopupActive = true;
+    }
+
+
+    hide() {
+        this.container.setVisible(false);
+        this.scene.isPopupActive = false;
+
+    }
 }

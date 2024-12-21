@@ -1,9 +1,9 @@
 import { Scene } from 'phaser';
 import { createText } from "../components/text1";
 import { createButton, } from "../components/button1";
-import { createMenu, } from "../components/button_menu";
-import { createWindows, } from "../components/windows1";
-
+import { createMenu1, } from "../components/menu1";
+import { createMenu2, } from "../components/menu2";
+import { PopupWindow, } from "../components/windows1";
 // Define the Game Scene
 export class GameScene extends Scene {
     constructor() {
@@ -17,6 +17,18 @@ export class GameScene extends Scene {
     }
 
     create() {
+
+        this.isPopupActive = false;
+
+        // Create the popup window
+        this.popupWindowMedium = new PopupWindow(this, 640, 300, 500, 300, () => {
+            // this.isPopupActive = false;
+        });
+        this.popupWindowBig = new PopupWindow(this, 640, 300, 750, 430, () => {
+            // this.isPopupActive = false;
+        });
+
+
         // add guard
         this.guards = [
             { name: "Dan", health: 100, damage: 20 },
@@ -31,6 +43,22 @@ export class GameScene extends Scene {
             { name: "Zoe", health: 130, damage: 10 },
         ];
 
+        this.roomNames = [
+            "Administrasi",
+            "Ruang Serbaguna",
+            "Barak",
+            "Ruang Medis",
+            "Kantin",
+            "Kamar Mandi",
+            "Lapangan",
+            "Lorong A",
+            "Lorong B",
+            "Lorong C",
+            "Lorong D",
+            "Pagar Kiri",
+            "Pagar Kanan",
+            "Pagar Bawah",
+        ];
         // Add background and map
         this.background = this.add.image(0, 0, "background");
         this.background.setOrigin(0, 0).setDisplaySize(this.sys.game.config.width, this.sys.game.config.height);
@@ -43,7 +71,9 @@ export class GameScene extends Scene {
 
         this.admiCctvButton.on("pointerdown", () => {
             if (!this.isPopupActive) {
-                this.showPopup("cam-administrasi", "Tidak ada orang disini");
+                const windowTitle = ("cam-administrasi");
+                const windowContent = createText(this, 0, 0, "Tidak ada orang disini...", "18px", "#98cc92").setOrigin(0.5);
+                this.popupWindowMedium.show(windowTitle, windowContent)
             }
         });
 
@@ -51,10 +81,11 @@ export class GameScene extends Scene {
         this.lapnCctvButton.angle = 90; // Rotates the image by 45 degrees
         this.lapnCctvButton.on("pointerdown", () => {
             if (!this.isPopupActive) {
-                this.showPopup("cam-lapangan", "Tidak ada orang disini");
+                const windowTitle = ("cam-lapangan");
+                const windowContent = createText(this, 0, 0, "Tidak ada orang disini...", "18px", "#98cc92").setOrigin(0.5);
+                this.popupWindowMedium.show(windowTitle, windowContent)
             }
         });
-
 
         this.walkieTalkie = this.add.image(100, 660, "walkieTalkie").setScale(0.4).setInteractive();
 
@@ -82,184 +113,71 @@ export class GameScene extends Scene {
                 this.transitionToHidden();
             }
         });
-
-        // Popup setup
-        this.createPopup();
     }
 
     // Show guard selection UI
-    showGuardSelection() {
-        this.isPopupActive = true;
+    showSelectGuardWindow() {
+        const windowTitle = "Pilih Penjaga";
+        const buttonsConfig = [];
 
-        const guardMenuContainer = this.add.container(640, 360);
-        // Background with outline
-
-        const background = this.add
-            .rectangle(0, 0, 700, 500, 0x282828)
-            .setOrigin(0.5)// Background with outline
-            .setStrokeStyle(4, 0x98cc92) // Adding outline with green color
-            .setDepth(1); // Lower depth
-        guardMenuContainer.add(background);
-
-        const titleText = createText(this, -100, -220, "Pilih Personil", "24px", "#98cc92");
-        guardMenuContainer.add(titleText);
-
-        this.guards.forEach((guard, index) => {
-            const guardButton = createText(this, 
-                -300 + (index % 2) * 300,
-                -150 + Math.floor(index / 2) * 50,
-                `${guard.name} - HP: ${guard.health}, DMG: ${guard.damage}`,
-                "18px",
-                "#ffffff",
-                "#444"
-            )
-                .setInteractive()
-                .setPadding(10, 5, 10, 5);
-
-            guardButton.on("pointerover", () => guardButton.setStyle({ backgroundColor: "#666", color: "#98cc92" }));
-            guardButton.on("pointerout", () => guardButton.setStyle({ backgroundColor: "#444", color: "#ffffff" }));
-            guardButton.on("pointerdown", () => {
-                this.isPopupActive = false;
-                guardMenuContainer.destroy();
-                this.showGuardPopup(guard.name, `HP: ${guard.health}\nDamages: ${guard.damage}`)
-            });
-
-            guardMenuContainer.add(guardButton);
+        this.guards.forEach((guard) => {
+            const guardButton = {
+                text: `${guard.name} - HP: ${guard.health}, DMG: ${guard.damage}`,
+                callback: () => {
+                    this.isPopupActive = false;
+                    this.popupWindowBig.hide();
+                    this.showSelectedGuardWindow(guard.name);
+                },
+            };
+            buttonsConfig.push(guardButton);
         });
 
-        const closeButton = createButton(this, 300, -220, "X", () => {
-            this.isPopupActive = false;
-            guardMenuContainer.destroy();
-        });
-        guardMenuContainer.add(closeButton);
+        const menu = createMenu2(this, -350, -150, buttonsConfig);
+        const windowContent = menu;
 
-        guardMenuContainer.setDepth(2); // Ensure it's behind the popup
+        // Store the popup window instance in a property
+        this.popupWindowBig.show(windowTitle, windowContent);
     }
 
-    // Show popup UI for guard information
-    showGuardPopup(title) {
-        this.isPopupActive = true;
+    showSelectedGuardWindow(name) {
+        const windowTitle = name;
+        const buttonsConfig = [];
 
-        const roomNames = [
-            "Administrasi",
-            "Ruang Serbaguna",
-            "Barak",
-            "Ruang Medis",
-            "Kantin",
-            "Kamar Mandi",
-            "Lapangan",
-            "Lorong A",
-            "Lorong B",
-            "Lorong C",
-            "Lorong D",
-            "Pagar Kiri",
-            "Pagar Kanan",
-            "Pagar Bawah",
+        this.roomNames.forEach((room) => {
+            const roomButton = {
+                text: room,
+                callback: () => {
+                    this.isPopupActive = false;
+                    this.popupWindowBig.hide();
+                    this.popupWindowMedium.show("Cek Ruangan", `Siap laksanakan, ${name} otw ke ${room}.`);
+                }
+            }
+            buttonsConfig.push(roomButton);
+        });
+        const menu = createMenu2(this, -350, -150, buttonsConfig);
+        const windowContent = menu;
+
+        // Store the popup window instance in a property
+        this.popupWindowBig.show(windowTitle, windowContent);
+    }
+
+    showAllGuardsWindow() {
+        const windowTitle = ("Semua Personil...");
+        const buttonsConfig = [
+            {
+                text: "Berpencar",
+                callback: () => { this.popupWindowMedium.show("Berpencar", "Semua penjaga sedang berpencar") },
+            },
+            {
+                text: "Kembali ke Barak",
+                callback: () => { this.popupWindowMedium.show("Kembali ke Barak", "Semua penjaga kembali ke barak") },
+            },
         ];
-        const guardPopupContainer = this.add.container(640, 360);
 
-        const background = this.add
-            .rectangle(0, 0, 700, 400, 0x282828)
-            .setOrigin(0.5)
-            .setStrokeStyle(4, 0x98cc92); // Add outline
-        guardPopupContainer.add(background);
-
-        const titleText = createText(this, 0, -160, `Check: ${title}`, "24px", "#98cc92");
-        guardPopupContainer.add(titleText);
-
-        roomNames.forEach((room, index) => {
-            const button = createText(this, 
-                -200 + (index % 3) * 200, // Positioning buttons in 3 columns
-                -80 + Math.floor(index / 3) * 50, // Rows based on index
-                room,
-                "18px",
-                "#ffffff",
-                "#444"
-            )
-                .setInteractive()
-                .setPadding(10, 5, 10, 5);
-
-            button.on("pointerover", () => button.setStyle({ backgroundColor: "#666", color: "#98cc92" }));
-            button.on("pointerout", () => button.setStyle({ backgroundColor: "#444", color: "#ffffff" }));
-            button.on("pointerdown", () => {
-                this.isPopupActive = false;
-                guardPopupContainer.destroy();
-                this.showPopup(`Checking ${room}`, `Siap laksanakan, ${title} otw ke ${room}.`)
-            }).setDepth(4);
-
-            guardPopupContainer.add(button);
-        });
-
-        const closeButton = createButton(this, 300, -160, "X", () => {
-            this.isPopupActive = false;
-            guardPopupContainer.destroy();
-        });
-        guardPopupContainer.add(closeButton).setDepth(3);
+        const menu = createMenu1(this, 0, -60, buttonsConfig);
+        const windowContent = menu;
+        this.popupWindowMedium.show(windowTitle, windowContent)
     }
-
-
-
-    showAllGuardsActions() {
-        this.isPopupActive = true;
-
-        const allGuardsMenu = this.add.container(640, 360);
-        const background = this.add
-            .rectangle(0, 0, 700, 300, 0x282828)
-            .setOrigin(0.5)
-            .setStrokeStyle(4, 0x98cc92); // Adding outline with green color;
-        allGuardsMenu.add(background);
-
-        const titleText = createText(this, 0, -120, "Semua Personil", "24px", "#98cc92");
-        allGuardsMenu.add(titleText);
-
-        // Create "Berpencar" Button
-        const scatterButton = createText(this, 
-            0,
-            -50,
-            "Berpencar",
-            "20px",
-            "#ffffff",
-            "#444"
-        )
-            .setInteractive()
-            .setPadding(10, 5, 10, 5);
-        scatterButton.on("pointerover", () => scatterButton.setStyle({ backgroundColor: "#666", color: "#98cc92" }));
-        scatterButton.on("pointerout", () => scatterButton.setStyle({ backgroundColor: "#444", color: "#ffffff" }));
-        scatterButton.on("pointerdown", () => {
-            this.isPopupActive = false;
-            allGuardsMenu.destroy();
-            this.showPopup("Berpencar", "Semua personil sedang berpencar.");
-        });
-        allGuardsMenu.add(scatterButton);
-
-        // Create "Kembali ke Barak" Button
-        const regroupButton = createText(this, 
-            0,
-            50,
-            "Kembali ke Barak",
-            "20px",
-            "#ffffff",
-            "#444"
-        )
-            .setInteractive()
-            .setPadding(10, 5, 10, 5);
-        regroupButton.on("pointerover", () => regroupButton.setStyle({ backgroundColor: "#666", color: "#98cc92" }));
-        regroupButton.on("pointerout", () => regroupButton.setStyle({ backgroundColor: "#444", color: "#ffffff" }));
-        regroupButton.on("pointerdown", () => {
-            this.isPopupActive = false;
-            allGuardsMenu.destroy();
-            this.showPopup("Kembali ke Barak", "Semua personil kembali ke barak.");
-        });
-        allGuardsMenu.add(regroupButton);
-
-        // Add a Close Button
-        const closeButton = createButton(this, 300, -120, "X", () => {
-            this.isPopupActive = false;
-            allGuardsMenu.destroy();
-        });
-        allGuardsMenu.add(closeButton);
-    }
-
 
     // Transition walkie-talkie to the middle
     transitionToMiddle() {
@@ -299,20 +217,31 @@ export class GameScene extends Scene {
 
     // Show walkie-talkie menu buttons
     showWalkieTalkieMenu() {
-        const buttonConfig = [
+        const buttonsConfig = [
             {
                 text: "Pilih Personil",
-                callback: () => { this.walkieTalkieMenu.destroy(); this.showGuardSelection() },
+                callback: () => {
+                    if (!this.isPopupActive) {
+                        // this.isPopupActive = true;
+                        this.walkieTalkieMenu.destroy();
+                        this.showSelectGuardWindow();
+                    }
+                },
             },
             {
                 text: "Semua Personil",
-                callback: () => { this.walkieTalkieMenu.destroy(); this.showAllGuardsActions() },
+                callback: () => {
+                    if (!this.isPopupActive) {
+                        // this.isPopupActive = true;
+                        this.walkieTalkieMenu.destroy();
+                        this.showAllGuardsWindow();
+                    }
+                },
             },
         ];
 
-        this.walkieTalkieMenu = createMenu(this, 640, 460, buttonConfig);
+        this.walkieTalkieMenu = createMenu1(this, 640, 460, buttonsConfig);
     }
-
 
     // Hide walkie-talkie menu buttons
     hideWalkieTalkieMenu() {
@@ -321,28 +250,4 @@ export class GameScene extends Scene {
         }
     }
 
-    // Show the popup
-    showPopup(title, content) {
-        this.isPopupActive = true;
-        this.popupElements.setVisible(true).setDepth(3);
-        const [background, titleText, contentText] = this.popupElements.list;
-        titleText.setText(title);
-        contentText.setText(content);
-    }
-
-    // Hide the popup and return to walkie-talkie scene B
-    hidePopup() {
-        this.isPopupActive = false;
-        this.popupElements.setVisible(false);
-    }
-
-    // Create popup elements
-    createPopup() {
-        this.popupElements = createWindows(this, 640, 360, 500, 300, "", "", () => this.hidePopup());
-        this.hidePopup();
-    }
-
-    
-
-    
 }
