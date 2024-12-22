@@ -1,6 +1,7 @@
 import { createButton } from "./button1.js";
 // Create menu buttons
-export function createMenu1(scene, x, y, buttonsConfig) {
+export function createMenu1(scene, x, y, buttonsConfig, onOpen, onClose) {
+    if (onOpen) onOpen();
     const menuContainer = scene.add.container(x, y);
 
     buttonsConfig.forEach((button, index) => {

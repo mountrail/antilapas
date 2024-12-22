@@ -2,7 +2,8 @@ import { createText } from "../components/text1";
 import { createButton } from "../components/button1";
 
 export class PopupWindow {
-    constructor(scene, x, y, width, height, onClose) {
+    constructor(scene, x, y, width, height, onOpen, onClose) {
+        if (onOpen) onOpen();
         this.scene = scene;
 
         // Background with outline
@@ -48,6 +49,8 @@ export class PopupWindow {
         // this.isPopupActive = false; // Tracks popup state
     }
 
+
+
     show(title, content) {
         this.titleText.setText(title);
         this.contents.removeAll(true); // Clear previous content
@@ -71,4 +74,6 @@ export class PopupWindow {
         this.scene.isPopupActive = false;
 
     }
+
+
 }
