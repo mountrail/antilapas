@@ -6,52 +6,61 @@ import { PopupWindow } from "../components/windows1";
 
 export class WalkieTalkie {
     constructor(scene, x, y, buttonsConfig) {
+        // Initialize properties
         this.scene = scene;
-        this.originalPosition = { x, y };
-        this.buttonsConfig = buttonsConfig;
-        this.targetPosition = { x: 640, y: 360 }; // Center position
+        this.originalPosition = { x, y }; // Starting position of the walkie-talkie
+        this.buttonsConfig = buttonsConfig; // Button configurations for the menu
+        this.targetPosition = { x: 640, y: 360 }; // Center position for the walkie-talkie
 
-        // Walkie-talkie icon
-        this.icon = scene.add.image(x, y, "walkieTalkie")
+        // Create the walkie-talkie icon
+        this.icon = this.createIcon(x, y);
+        this.menu = null; // Menu container, initially null
+        this.isActive = false; // State to track if the walkie-talkie is active
+        this.activeWindow = null; // Tracks the currently active popup window
+
+        // Create popup windows
+        this.windowBig = this.createPopupWindow(750, 430); // Large popup window
+        this.windowMid = this.createPopupWindow(500, 300); // Medium popup window
+
+        // Add event listeners
+        this.addPointerDownListener();
+        this.addSceneInputListener();
+    }
+
+    // Creates the walkie-talkie icon and sets up interactions
+    createIcon(x, y) {
+        return this.scene.add.image(x, y, "walkieTalkie")
             .setScale(0.4)
             .setInteractive()
-            .setDepth(2);
+            .setDepth(2)
+            .on("pointerdown", () => {
+                if (!this.isActive) this.activate();
+            });
+    }
 
-        // Menu container
-        this.menu = null;
+    // Creates a reusable popup window instance
+    createPopupWindow(width, height) {
+        return new PopupWindow(
+            this.scene, 640, 300, width, height,
+            () => {}, // Callback for when the window is shown (currently no-op)
+            () => {
+                this.activeWindow = null; // Clear the active window reference
+                this.deactivate(); // Deactivate the walkie-talkie when the window closes
+            }
+        );
+    }
 
-        // State variables
-        this.isActive = false;
-        this.activeWindow = null; // Tracks the active window
-
-        // Event listeners
+    // Adds an event listener for the walkie-talkie icon
+    addPointerDownListener() {
         this.icon.on("pointerdown", () => {
             if (!this.isActive) {
                 this.activate();
             }
         });
+    }
 
-        // Window instances
-        this.windowBig = new PopupWindow(
-            this.scene, 640, 300, 750, 430,
-            () => { }, // No-op for on show
-            () => {
-                this.activeWindow = null; // Clear active window on close
-                this.deactivate(); // Explicitly deactivate
-            }
-        );
-
-        this.windowMid = new PopupWindow(
-            this.scene, 640, 300, 500, 300,
-            () => { }, // No-op for on show
-            () => {
-                this.activeWindow = null; // Clear active window on close
-                this.deactivate(); // Explicitly deactivate
-            }
-        );
-
-
-        // Handle clicks outside the icon and menu
+    // Adds an event listener to handle clicks outside the walkie-talkie and its menu
+    addSceneInputListener() {
         this.scene.input.on("pointerdown", (pointer, gameObjects) => {
             if (
                 this.isActive &&
@@ -64,78 +73,64 @@ export class WalkieTalkie {
         });
     }
 
-
+    // Activates the walkie-talkie and shows the menu
     activate() {
         if (!this.scene.isPopupActive) {
-
-            this.isActive = true;
-
-            // Animate the walkie-talkie to the center
-            this.scene.tweens.add({
-                targets: this.icon,
-                x: this.targetPosition.x,
-                y: this.targetPosition.y,
-                duration: 500,
-                ease: "Power2",
-            });
-
-            // Show menu
-            this.showMenu();
+            this.isActive = true; // Set active state
+            this.animateIcon(this.targetPosition.x, this.targetPosition.y); // Move icon to center
+            this.showMenu(); // Display the menu
         }
     }
 
+    // Deactivates the walkie-talkie and hides the menu
     deactivate() {
-        this.isActive = false;
-
-        // Animate the walkie-talkie back to its original position
-        this.scene.tweens.add({
-            targets: this.icon,
-            x: this.originalPosition.x,
-            y: this.originalPosition.y,
-            duration: 500,
-            ease: "Power2",
-        });
-
-        // Hide menu
-        this.hideMenu();
+        this.isActive = false; // Set inactive state
+        this.animateIcon(this.originalPosition.x, this.originalPosition.y); // Move icon back to original position
+        this.hideMenu(); // Hide the menu
     }
 
+    // Animates the walkie-talkie icon to a target position
+    animateIcon(x, y) {
+        this.scene.tweens.add({
+            targets: this.icon,
+            x,
+            y,
+            duration: 500, // Animation duration
+            ease: "Power2", // Easing function
+        });
+    }
+
+    // Displays the menu at the target position
     showMenu() {
-        this.scene.isPopupActive = true;
+        this.scene.isPopupActive = true; // Mark popup as active
         this.menu = createMenu1(this.scene, this.targetPosition.x, this.targetPosition.y + 100, this.buttonsConfig).setDepth(2);
     }
 
+    // Hides and destroys the menu
     hideMenu() {
-        this.scene.isPopupActive = false;
+        this.scene.isPopupActive = false; // Mark popup as inactive
         if (this.menu) {
             this.menu.destroy();
             this.menu = null;
         }
     }
 
+    // Displays a window to select a guard
     showSelectGuardWindow() {
         const windowTitle = "Pilih Penjaga";
-        const buttonsConfig = [];
+        const buttonsConfig = this.scene.guards.map((guard) => ({
+            text: `${guard.name} - HP: ${guard.health}, DMG: ${guard.damage}`, // Button label
+            callback: () => {
+                this.scene.isPopupActive = false; // Deactivate popup state
+                this.windowBig.hide(); // Hide the big window
+                this.showSelectedGuardWindow(guard.name); // Show details for the selected guard
+            },
+        }));
 
-        this.scene.guards.forEach((guard) => {
-            const guardButton = {
-                text: `${guard.name} - HP: ${guard.health}, DMG: ${guard.damage}`,
-                callback: () => {
-                    this.scene.isPopupActive = false;
-                    this.windowBig.hide();
-                    this.showSelectedGuardWindow(guard.name);
-                },
-            };
-            buttonsConfig.push(guardButton);
-        });
-
-        const menu = createMenu2(this.scene, -350, -150, buttonsConfig);
-        const windowContent = menu;
-
-        this.windowBig.show(windowTitle, windowContent);
-        this.activeWindow = this.windowBig; // Mark the window as active
+        this.displayWindow(this.windowBig, windowTitle, createMenu2(this.scene, -350, -150, buttonsConfig));
     }
 
+    // Displays a window with options for all guards
     showAllGuardsWindow() {
         const windowTitle = "Semua Personil...";
         const buttonsConfig = [
@@ -153,32 +148,27 @@ export class WalkieTalkie {
             },
         ];
 
-        const menu = createMenu1(this.scene, 0, -60, buttonsConfig);
-        const windowContent = menu;
-        this.windowMid.show(windowTitle, windowContent);
-        this.activeWindow = this.windowMid; // Mark the window as active
+        this.displayWindow(this.windowMid, windowTitle, createMenu1(this.scene, 0, -60, buttonsConfig));
     }
 
-
+    // Displays a window for a selected guard with room options
     showSelectedGuardWindow(name) {
-        const windowTitle = name;
-        const buttonsConfig = [];
+        const windowTitle = name; // Window title is the guard's name
+        const buttonsConfig = this.scene.roomNames.map((room) => ({
+            text: room, // Button label is the room name
+            callback: () => {
+                this.scene.isPopupActive = false; // Deactivate popup state
+                this.windowBig.hide(); // Hide the big window
+                this.windowMid.show("Cek Ruangan", `Siap laksanakan, ${name} otw ke ${room}.`); // Show confirmation message
+            },
+        }));
 
-        this.scene.roomNames.forEach((room) => {
-            const roomButton = {
-                text: room,
-                callback: () => {
-                    this.scene.isPopupActive = false;
-                    this.windowBig.hide();
-                    this.windowMid.show("Cek Ruangan", `Siap laksanakan, ${name} otw ke ${room}.`);
-                }
-            }
-            buttonsConfig.push(roomButton);
-        });
-        const menu = createMenu2(this.scene, -350, -150, buttonsConfig);
-        const windowContent = menu;
+        this.displayWindow(this.windowBig, windowTitle, createMenu2(this.scene, -350, -150, buttonsConfig));
+    }
 
-        // Store the popup window instance in a property
-        this.windowBig.show(windowTitle, windowContent);
+    // Helper function to display a window with a title and content
+    displayWindow(window, title, content) {
+        window.show(title, content); // Show the window
+        this.activeWindow = window; // Mark the window as active
     }
 }
