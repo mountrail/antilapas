@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { createText } from "../components/text1";
 import { PopupWindow } from "../components/windows1";
 import { WalkieTalkie } from "../components/walkieTalkie";
+import { createButton } from '../components/button1';
 
 // Define the Game Scene
 export class GameScene extends Scene {
@@ -9,6 +10,7 @@ export class GameScene extends Scene {
         super({ key: "GameScene" });
     }
 
+    // ########################## SCENE PRELOAD #############################
     preload() {
         // Load assets required for the scene
         this.load.image("prisonMap", "assets/prison-map.png");
@@ -19,26 +21,28 @@ export class GameScene extends Scene {
         this.startTime = { hours: 6, minutes: 0 };
     }
 
+    // ########################## SCENE CREATE #############################
     create() {
         this.isPopupActive = false; // Tracks if a popup is active
-
+        this.isMapActive = false;
         // Create popup windows for different purposes
         this.windowMid = new PopupWindow(this, 640, 300, 500, 300);
         this.windowBig = new PopupWindow(this, 640, 300, 750, 430);
 
         // Add guards with their attributes
         this.guards = [
-            { name: "Dan", health: 100, damage: 20 },
-            { name: "Max", health: 90, damage: 25 },
-            { name: "Joe", health: 120, damage: 15 },
-            { name: "Jay", health: 110, damage: 18 },
-            { name: "Moe", health: 80, damage: 30 },
-            { name: "Doe", health: 95, damage: 22 },
-            { name: "May", health: 100, damage: 20 },
-            { name: "Zen", health: 110, damage: 16 },
-            { name: "Sal", health: 85, damage: 28 },
-            { name: "Zoe", health: 130, damage: 10 },
+            { name: "Dan", health: 100, damage: 20, position: "Administrasi" },
+            { name: "Max", health: 90, damage: 25, position: "Barak" },
+            { name: "Joe", health: 120, damage: 15, position: "Ruang Medis" },
+            { name: "Jay", health: 110, damage: 18, position: "Lorong A" },
+            { name: "Moe", health: 80, damage: 30, position: "Lorong B" },
+            { name: "Doe", health: 95, damage: 22, position: "Lorong C" },
+            { name: "May", health: 100, damage: 20, position: "Kantin" },
+            { name: "Zen", health: 110, damage: 16, position: "Lapangan" },
+            { name: "Jaz", health: 85, damage: 28, position: "Kamar Mandi" },
+            { name: "Zoe", health: 130, damage: 10, position: "Pagar Kiri" },
         ];
+
 
         // List of room names in the scene
         this.roomNames = [
@@ -63,7 +67,9 @@ export class GameScene extends Scene {
             .setOrigin(0, 0)
             .setDisplaySize(this.sys.game.config.width, this.sys.game.config.height);
 
-        this.add.image(650, 300, "prisonMap").setInteractive();
+        // this.add.image(650, 300, "prisonMap").setInteractive();
+
+        createButton(this, 250, 490, "Buka Peta", () => { this.showMap() });
 
         // Instantiate the WalkieTalkie component
         this.walkieTalkie = new WalkieTalkie(
@@ -93,14 +99,121 @@ export class GameScene extends Scene {
         );
 
         // Add interactive CCTV buttons
-        this.addCctvButton(415, 140, "cam-administrasi", "Tidak ada orang disini...");
-        this.addCctvButton(775, 235, "cam-lapangan", "Tidak ada orang disini...");
+        // this.addCctvButton(415, 140, "cam-administrasi", "Tidak ada orang disini...");
+        // this.addCctvButton(775, 235, "cam-lapangan", "Tidak ada orang disini...");
 
         // Add a timer
         this.initializeTimer();
+
+        // Add a container to hold the room-guard text objects
+        this.roomGuardDisplay = [];
+
+        // Initial update for room-guard display
+        this.updateRoomGuardDisplay();
+
     }
 
-    // Helper function to add CCTV buttons
+    // ########################## SCENE UPDATE #############################
+    update() { }
+
+    
+    // ########################## DISPLAY ROOM AND GUARD #############################
+    updateRoomGuardDisplay() {
+        // Clear the previous display
+        this.roomGuardDisplay.forEach(text => text.destroy());
+        this.roomGuardDisplay = [];
+
+        const roomGuardMap = {};
+
+        // Build a map of rooms to guards
+        this.guards.forEach(guard => {
+            if (!roomGuardMap[guard.position]) {
+                roomGuardMap[guard.position] = [];
+            }
+            roomGuardMap[guard.position].push(guard.name);
+        });
+
+        // Generate the display text dynamically using createText
+        let yPosition = 90; // Starting y position for the text display
+        this.roomNames.forEach(room => {
+            const guardsInRoom = roomGuardMap[room.name] || [];
+            const isEmpty = guardsInRoom.length === 0; // Check if the room is empty
+            const displayText = `${room.name}: ${guardsInRoom.join(", ") || "Empty"}`;
+            const textColor = isEmpty ? "#ff4c4c" : "#98cc92"; // Red if empty, green otherwise
+            const textObject = createText(this, 250, yPosition, displayText, "18px", textColor);
+            this.roomGuardDisplay.push(textObject);
+            yPosition += 20; // Move to the next line
+        });
+    }
+
+
+    // ########################## FIND PATH #############################
+    findRoomByName(name) {
+        return this.roomNames.find(room => room.name === name);
+    }
+
+    findPath(start, destination) {
+        const queue = [[start]]; // Queue to store paths
+        const visited = new Set(); // Set to track visited rooms
+
+        while (queue.length > 0) {
+            const path = queue.shift(); // Dequeue the first path
+            const room = path[path.length - 1]; // Get the last room in the path
+
+            if (room === destination) return path; // If destination is reached, return the path
+
+            if (!visited.has(room)) {
+                visited.add(room); // Mark the room as visited
+                const roomData = this.findRoomByName(room); // Get room data
+                if (roomData) {
+                    // Combine connections and pathways into a single list of neighbors
+                    const neighbors = [...(roomData.connections || []), ...(roomData.pathways || [])];
+                    for (const neighbor of neighbors) {
+                        if (!visited.has(neighbor)) {
+                            queue.push([...path, neighbor]); // Add new path to the queue
+                        }
+                    }
+                }
+            }
+        }
+
+        return null; // Return null if no path is found
+    }
+
+    moveGuard(guardName, destination) {
+        const guard = this.guards.find(g => g.name === guardName);
+        if (!guard) {
+            console.log(`Guard ${guardName} not found.`);
+            return;
+        }
+
+        const path = this.findPath(guard.position, destination);
+        if (!path) {
+            console.log(`No path found from ${guard.position} to ${destination}.`);
+            return;
+        }
+
+        console.log(`Guard ${guardName} is navigating from ${guard.position} to ${destination}.`);
+
+        let step = 0;
+        const moveStep = () => {
+            if (step < path.length) {
+                guard.position = path[step];
+                this.updateRoomGuardDisplay(); // Update the display after each step
+                step++;
+                if (step < path.length) {
+                    setTimeout(moveStep, 1000); // Wait 1 second between steps
+                } else {
+                    console.log(`Guard ${guardName} has reached ${destination}.`);
+                    this.updateRoomGuardDisplay(); // Final update after reaching destination
+                }
+            }
+        };
+
+        moveStep();
+    }
+
+    // ########################## ADD CCTV BUTTON #############################
     addCctvButton(x, y, title, message) {
         const button = this.add.image(x, y, "cctv").setScale(0.6).setInteractive();
         button.angle = 90; // Rotate the image
@@ -112,12 +225,26 @@ export class GameScene extends Scene {
         });
     }
 
-    // Initialize and start the timer
+    // ########################## SHOW MAP #############################
+    showMap() {
+        if (!this.isMapActive) {
+            this.isMapActive = true;
+            const map = this.add.image(650, 300, "prisonMap").setInteractive().setDepth(1);
+            if (map) {
+                map.on("pointerdown", () => {
+                    this.isMapActive = false;
+                    map.destroy();
+                });
+            }
+        }
+    }
+
+    // ########################## TIMER #############################
     initializeTimer() {
         let currentTime = this.startTime; // Start at 06:00
 
         // Display the timer on the screen
-        const timerText = this.add.text(10, 10, "Time: 06:00", { fontSize: "20px", color: "#FFFFFF" });
+        const timerText = createText(this, 10, 10, "Time: 06:00", "24px", "#ffffff");
 
         // Update the timer every second (real-life)
         this.time.addEvent({

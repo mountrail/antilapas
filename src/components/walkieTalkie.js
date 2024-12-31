@@ -42,7 +42,7 @@ export class WalkieTalkie {
     createPopupWindow(width, height) {
         return new PopupWindow(
             this.scene, 640, 300, width, height,
-            () => {}, // Callback for when the window is shown (currently no-op)
+            () => { }, // Callback for when the window is shown (currently no-op)
             () => {
                 this.activeWindow = null; // Clear the active window reference
                 this.deactivate(); // Deactivate the walkie-talkie when the window closes
@@ -64,7 +64,7 @@ export class WalkieTalkie {
         this.scene.input.on("pointerdown", (pointer, gameObjects) => {
             if (
                 this.isActive &&
-                !gameObjects.includes(this.WtImage) &&                !this.activeWindow
+                !gameObjects.includes(this.WtImage) && !this.activeWindow
             ) {
                 this.deactivate();
             }
@@ -128,7 +128,6 @@ export class WalkieTalkie {
         this.displayWindow(this.windowBig, windowTitle, createMenu2(this.scene, -350, -150, buttonsConfig));
     }
 
-    // Displays a window with options for all guards
     showAllGuardsWindow() {
         const windowTitle = "Semua Personil...";
         const buttonsConfig = [
@@ -136,18 +135,37 @@ export class WalkieTalkie {
                 text: "Berpencar",
                 callback: () => {
                     this.windowMid.show("Berpencar", "Semua penjaga sedang berpencar");
+
+                    const availableRooms = this.scene.roomNames; // Get the list of available rooms
+                    const assignedRooms = new Set(); // To ensure guards are sent to different rooms
+
+                    this.scene.guards.forEach((guard) => {
+                        let randomRoom;
+
+                        // Assign a random room that hasn't been used yet (if possible)
+                        do {
+                            randomRoom = availableRooms[Math.floor(Math.random() * availableRooms.length)];
+                        } while (assignedRooms.has(randomRoom) && assignedRooms.size < availableRooms.length);
+
+                        assignedRooms.add(randomRoom); // Mark the room as assigned
+                        this.scene.moveGuard(guard.name, randomRoom.name); // Move the guard to the assigned room
+                    });
                 },
             },
             {
                 text: "Kembali ke Barak",
                 callback: () => {
                     this.windowMid.show("Kembali ke Barak", "Semua penjaga kembali ke barak");
+                    this.scene.guards.forEach((guard) => {
+                        this.scene.moveGuard(guard.name, "Barak"); // Command each guard to move to the "Barak" room
+                    });
                 },
             },
         ];
 
         this.displayWindow(this.windowMid, windowTitle, createMenu1(this.scene, 0, -60, buttonsConfig));
     }
+
 
     // Displays a window for a selected guard with room options
     showSelectedGuardWindow(name) {
@@ -158,6 +176,7 @@ export class WalkieTalkie {
                 this.scene.isPopupActive = false; // Deactivate popup state
                 this.windowBig.hide(); // Hide the big window
                 this.windowMid.show("Cek Ruangan", `Siap laksanakan, ${name} otw ke ${room.name}.`); // Show confirmation message
+                this.scene.moveGuard(name, room.name);
             },
         }));
 
