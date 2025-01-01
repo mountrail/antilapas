@@ -31,35 +31,36 @@ export class GameScene extends Scene {
 
         // Add guards with their attributes
         this.guards = [
-            { name: "Dan", health: 100, damage: 20, position: "Administrasi" },
-            { name: "Max", health: 90, damage: 25, position: "Barak" },
-            { name: "Joe", health: 120, damage: 15, position: "Ruang Medis" },
-            { name: "Jay", health: 110, damage: 18, position: "Lorong A" },
-            { name: "Moe", health: 80, damage: 30, position: "Lorong B" },
-            { name: "Doe", health: 95, damage: 22, position: "Lorong C" },
-            { name: "May", health: 100, damage: 20, position: "Kantin" },
-            { name: "Zen", health: 110, damage: 16, position: "Lapangan" },
-            { name: "Jaz", health: 85, damage: 28, position: "Kamar Mandi" },
-            { name: "Zoe", health: 130, damage: 10, position: "Pagar Kiri" },
+            { name: "Thorne", health: 100, damage: 20, position: "Administrasi", color: "#ff4c4c" },
+            { name: "Blaze", health: 90, damage: 25, position: "Barak" },
+            { name: "Raven", health: 120, damage: 15, position: "Ruang Medis" },
+            { name: "Axel", health: 110, damage: 18, position: "Lorong A" },
+            { name: "Vex", health: 80, damage: 30, position: "Lorong B" },
+            { name: "Drake", health: 95, damage: 22, position: "Lorong C" },
+            { name: "Nyx", health: 100, damage: 20, position: "Kantin" },
+            { name: "Zephyr", health: 110, damage: 16, position: "Lapangan" },
+            { name: "Jinx", health: 85, damage: 28, position: "Kamar Mandi" },
+            { name: "Echo", health: 130, damage: 10, position: "Pagar Kiri" },
         ];
+
 
 
         // List of room names in the scene
         this.roomNames = [
-            { name: "Administrasi", connections: ["Ruang Serbaguna", "Barak", "Ruang Medis", "Pagar Kanan", "Pagar Kiri", "Keluar"], cam: "cam-administrasi" },
-            { name: "Barak", connections: ["Administrasi", "Ruang Medis"] },
-            { name: "Ruang Serbaguna", connections: ["Administrasi", "Lorong A"] },
-            { name: "Ruang Medis", connections: ["Barak", "Administrasi", "Lorong D"] },
-            { name: "Lorong A", connections: ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Ruang Serbaguna", "Lapangan"], pathways: ["Lorong B", "Lorong D"] },
-            { name: "Lorong B", connections: ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "Kantin"], pathways: ["Lorong A", "Lorong C"] },
-            { name: "Lorong C", connections: ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "Kamar Mandi", "Lapangan"], pathways: ["Lorong B", "Lorong D"] },
-            { name: "Lorong D", connections: ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "Ruang Medis"], pathways: ["Lorong A", "Lorong C"] },
-            { name: "Kantin", connections: ["Lorong B"] },
-            { name: "Kamar Mandi", connections: ["Lorong C"] },
-            { name: "Lapangan", connections: ["Lorong A", "Lorong C"], cam: "cam-lapangan" },
-            { name: "Pagar Kiri", connections: ["Administrasi"], pathways: ["Pagar Belakang"] },
-            { name: "Pagar Kanan", connections: ["Administrasi"], pathways: ["Pagar Belakang"] },
-            { name: "Pagar Belakang", pathways: ["Pagar Kiri", "Pagar Kanan"] },
+            { name: "Administrasi", connections: ["Ruang Serbaguna", "Barak", "Ruang Medis", "Pagar Kanan", "Pagar Kiri", "Keluar"], navTime: 6, cam: "cam-administrasi" },
+            { name: "Barak", connections: ["Administrasi", "Ruang Medis"], navTime: 4, },
+            { name: "Ruang Serbaguna", connections: ["Administrasi", "Lorong A"], navTime: 4, },
+            { name: "Ruang Medis", connections: ["Barak", "Administrasi", "Lorong D"], navTime: 4, },
+            { name: "Lorong A", connections: ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Ruang Serbaguna", "Lapangan"], pathways: ["Lorong B", "Lorong D"], navTime: 10, },
+            { name: "Lorong B", connections: ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "Kantin"], pathways: ["Lorong A", "Lorong C"], navTime: 10, },
+            { name: "Lorong C", connections: ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "Kamar Mandi", "Lapangan"], pathways: ["Lorong B", "Lorong D"], navTime: 10, },
+            { name: "Lorong D", connections: ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "Ruang Medis"], pathways: ["Lorong A", "Lorong C"], navTime: 10, },
+            { name: "Kantin", connections: ["Lorong B"], navTime: 4, },
+            { name: "Kamar Mandi", connections: ["Lorong C"], navTime: 4, },
+            { name: "Lapangan", connections: ["Lorong A", "Lorong C"], cam: "cam-lapangan", navTime: 10, },
+            { name: "Pagar Kiri", connections: ["Administrasi"], pathways: ["Pagar Belakang"], navTime: 12, },
+            { name: "Pagar Kanan", connections: ["Administrasi"], pathways: ["Pagar Belakang"], navTime: 12, },
+            { name: "Pagar Belakang", pathways: ["Pagar Kiri", "Pagar Kanan"], navTime: 12, },
         ];
 
         // Set up background and prison map
@@ -116,7 +117,7 @@ export class GameScene extends Scene {
     // ########################## SCENE UPDATE #############################
     update() { }
 
-    
+
     // ########################## DISPLAY ROOM AND GUARD #############################
     updateRoomGuardDisplay() {
         // Clear the previous display
@@ -187,6 +188,12 @@ export class GameScene extends Scene {
             return;
         }
 
+        // Cancel any ongoing movement for this guard
+        if (guard.currentMovement) {
+            clearTimeout(guard.currentMovement);
+            console.log(`Guard ${guardName}'s previous movement was interrupted.`);
+        }
+
         const path = this.findPath(guard.position, destination);
         if (!path) {
             console.log(`No path found from ${guard.position} to ${destination}.`);
@@ -201,17 +208,37 @@ export class GameScene extends Scene {
                 guard.position = path[step];
                 this.updateRoomGuardDisplay(); // Update the display after each step
                 step++;
+
                 if (step < path.length) {
-                    setTimeout(moveStep, 1000); // Wait 1 second between steps
+                    // Get the navigation time of the current room
+                    const currentRoom = this.findRoomByName(path[step - 1]);
+                    const nextNavTime = currentRoom ? currentRoom.navTime * 1000 : 1000; // Default to 1 second if navTime is undefined
+
+                    guard.currentMovement = setTimeout(moveStep, nextNavTime);
                 } else {
                     console.log(`Guard ${guardName} has reached ${destination}.`);
+                    delete guard.currentMovement; // Clear movement tracker
                     this.updateRoomGuardDisplay(); // Final update after reaching destination
                 }
             }
         };
 
+        // Start moving the guard
         moveStep();
     }
+
+    clearAllGuardCommands() {
+        this.guards.forEach(guard => {
+            if (guard.currentMovement) {
+                clearTimeout(guard.currentMovement);
+                delete guard.currentMovement;
+                console.log(`Guard ${guard.name}'s movement has been stopped.`);
+            }
+        });
+        console.log("All guard commands have been cleared.");
+    }
+
+
 
     // ########################## ADD CCTV BUTTON #############################
     addCctvButton(x, y, title, message) {

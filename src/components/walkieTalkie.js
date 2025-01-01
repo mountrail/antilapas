@@ -161,6 +161,13 @@ export class WalkieTalkie {
                     });
                 },
             },
+            {
+                text: "Berhenti",
+                callback: () => {
+                    this.windowMid.show("Berhenti", "Semua penjaga tetap di posisi");
+                    this.scene.clearAllGuardCommands();
+                },
+            },
         ];
 
         this.displayWindow(this.windowMid, windowTitle, createMenu1(this.scene, 0, -60, buttonsConfig));
